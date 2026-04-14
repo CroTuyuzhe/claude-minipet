@@ -1,6 +1,8 @@
 # 🐾 Claude MiniPet
 
-一只住在 Claude Code 终端里的虚拟宠物。写代码时它会陪着你，获得经验、升级、进化。
+一只住在 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 终端里的虚拟宠物。在你使用 Claude Code 编程时，它会陪伴在终端底部，随着你的 coding 活动获得经验、升级、进化。
+
+> **前提条件：** 本工具是 Claude Code 的扩展插件，需要先安装 Node.js 和 Claude Code 才能使用。
 
 <p align="center">
   <img src="show.png" alt="Claude MiniPet Screenshot" width="100%" />
@@ -12,7 +14,33 @@
   <img src="https://img.shields.io/badge/License-MIT-blue" />
 </p>
 
-## 安装
+## 环境准备
+
+### 1. 安装 Node.js
+
+前往 [Node.js 官网](https://nodejs.org/) 下载安装 LTS 版本（>=18），或使用包管理器：
+
+```bash
+# macOS (Homebrew)
+brew install node
+
+# Ubuntu / Debian
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Windows (winget)
+winget install OpenJS.NodeJS.LTS
+```
+
+### 2. 安装 Claude Code
+
+参考 [Claude Code 官方文档](https://docs.anthropic.com/en/docs/claude-code) 安装：
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+## 安装 MiniPet
 
 ```bash
 npm install -g claude-minipet && claude-minipet init
