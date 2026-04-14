@@ -3,6 +3,10 @@
 一只住在 Claude Code 终端里的虚拟宠物。写代码时它会陪着你，获得经验、升级、进化。
 
 <p align="center">
+  <img src="show.png" alt="Claude MiniPet Screenshot" width="100%" />
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white" />
   <img src="https://img.shields.io/badge/Claude_Code-TUI-6c5ce7" />
   <img src="https://img.shields.io/badge/License-MIT-blue" />
