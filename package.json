@@ -1,7 +1,7 @@
 {
   "name": "claude-minipet",
   "version": "0.1.1",
-  "description": "🐾 A virtual pet that lives in Claude Code's TUI — feed it, watch it evolve, collect rare species!",
+  "description": "🐾 A virtual pet for Claude Code TUI — it grows, evolves, and codes with you! / Claude Code 终端虚拟宠物 - 陪你写代码、升级、进化！",
   "type": "module",
   "bin": {
     "claude-minipet": "./dist/cli/index.js"
