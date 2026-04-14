@@ -1,5 +1,8 @@
 # 🐾 Claude MiniPet
 
+> [!IMPORTANT]
+> **Privacy Notice:** All hooks in this project are used solely for entertainment-purpose pet status monitoring (EXP, mood, hunger, etc.). **We never read, store, or transmit any of your code, file contents, or conversation data.** All data processing happens locally on your machine. Cloud sync only uploads pet state values (level, EXP, stat counters, etc.) — no source code or private information is ever included. This project is fully open-source — feel free to audit the code.
+
 A virtual pet that lives in [Claude Code](https://docs.anthropic.com/en/docs/claude-code)'s terminal. It accompanies you while coding — gaining experience, leveling up, and evolving along the way.
 
 > **Prerequisites:** This is a Claude Code extension plugin. Node.js and Claude Code must be installed first.
