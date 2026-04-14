@@ -57,7 +57,7 @@ The interactive guide walks you through email login, pet creation, and hook setu
 📤 Sending verification code...
 ✅ Code sent to your email
 
-🔑 Enter code: 483721
+🔑 Enter code (type r to resend): 483721
 ✅ Login successful!
 
 ✨ A new pet is born! ✨
