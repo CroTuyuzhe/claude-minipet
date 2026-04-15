@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.3] - 2026-04-15
+
+### Fixed
+- **Critical**: `login` command defaulted to `localhost:3456` instead of production server — users who logged in via `claude-minipet login` were connecting to local server
+- Unified all server URL fallbacks to `https://minipet.crazyma99.xyz`
+
 ## [0.7.2] - 2026-04-15
 
 ### Added

@@ -31,7 +31,7 @@ export function saveAuth(data: AuthData): void {
 /** Get server URL from config or default */
 export function getServerUrl(): string {
   const auth = loadAuth();
-  return auth?.serverUrl ?? 'http://localhost:3456';
+  return auth?.serverUrl ?? 'https://minipet.crazyma99.xyz';
 }
 
 /** Make authenticated API request */

@@ -353,7 +353,7 @@ function prompt(question: string): Promise<string> {
 
 /** Login with email verification code */
 async function doLogin(serverUrl?: string) {
-  const url = serverUrl ?? 'http://localhost:3456';
+  const url = serverUrl ?? DEFAULT_SERVER;
 
   console.log(`  服务器: ${url}`);
   const email = await prompt('  请输入邮箱: ');
