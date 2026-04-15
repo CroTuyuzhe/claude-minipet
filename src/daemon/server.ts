@@ -97,11 +97,11 @@ function applyDecay(): void {
         saveBubble(hb.message);
       }
       // Save sync status with version info from heartbeat
-      syncPetToServer(state)
+      syncPetToServer(state, PKG_VERSION)
         .then(ok => saveSyncStatus(ok, undefined, hb.latestVersion, hb.needsUpdate))
         .catch(() => saveSyncStatus(false, 'sync failed', hb.latestVersion, hb.needsUpdate));
     }).catch(() => {
-      syncPetToServer(state)
+      syncPetToServer(state, PKG_VERSION)
         .then(ok => saveSyncStatus(ok))
         .catch(() => saveSyncStatus(false, 'sync failed'));
     });

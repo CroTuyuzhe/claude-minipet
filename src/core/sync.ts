@@ -59,9 +59,9 @@ async function apiRequest(method: string, path: string, body?: unknown): Promise
   }
 }
 
-/** Sync full pet state to server */
-export async function syncPetToServer(state: PetState): Promise<boolean> {
-  const result = await apiRequest('PUT', '/pets', { state });
+/** Sync full pet state to server (with client version for server-side validation) */
+export async function syncPetToServer(state: PetState, version?: string): Promise<boolean> {
+  const result = await apiRequest('PUT', '/pets', { state, version });
   return result?.ok ?? false;
 }
 

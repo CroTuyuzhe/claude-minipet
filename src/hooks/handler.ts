@@ -4,10 +4,17 @@ import { RARITY_INFO } from '../core/rarity.js';
 import { evolutionAnimation, levelUpNotification, stageUpNotification, greetingMessage } from '../render/animation.js';
 import { triggerAnim } from '../render/anim-state.js';
 import { syncPetToServer, loadAuth } from '../core/sync.js';
-import { saveSyncStatus } from '../core/sync-status.js';
+import { saveSyncStatus, loadSyncStatus } from '../core/sync-status.js';
 import { generateCodeComment, reactToCodeQuality, checkEasterEgg } from '../core/comments.js';
 import { saveBubble, setBubbleCoding, setBubbleDone } from '../render/bubble.js';
 import type { HookInput } from '../core/types.js';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const PKG_VERSION: string = (() => {
+  try { return require('../../package.json').version ?? 'unknown'; }
+  catch { return 'unknown'; }
+})();
 
 /** Main hook handler - reads stdin JSON, processes event, outputs response */
 export async function handleHook(): Promise<void> {
@@ -71,6 +78,14 @@ export async function handleHook(): Promise<void> {
   const output: string[] = [];
   const systemMessages: string[] = [];
 
+  // SessionStart: check for version update
+  if (input.hook_event_name === 'SessionStart') {
+    const syncInfo = loadSyncStatus();
+    if (syncInfo?.needsUpdate && syncInfo.latestVersion) {
+      output.push(`⚠️ MiniPet 有新版本 v${syncInfo.latestVersion}（当前 v${PKG_VERSION}），请运行: ! npm install -g claude-minipet@latest`);
+    }
+  }
+
   for (const msg of messages) {
     if (msg === 'greeting') {
       output.push(greetingMessage(state.name, state.mood, state.hunger));
@@ -125,7 +140,7 @@ export async function handleHook(): Promise<void> {
 
   // Background sync to server (track connection status)
   if (loadAuth()) {
-    syncPetToServer(state)
+    syncPetToServer(state, PKG_VERSION)
       .then(ok => saveSyncStatus(ok))
       .catch(() => saveSyncStatus(false, 'connection failed'));
   }

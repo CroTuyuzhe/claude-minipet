@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.2] - 2026-04-15
+
+### Added
+- **Bidirectional version check**: server rejects sync from clients older than minimum version (403)
+- **SessionStart version warning**: Claude sees upgrade prompt when new version available on session start
+- Client sync now sends version to server for validation
+
 ## [0.7.1] - 2026-04-15
 
 ### Added
