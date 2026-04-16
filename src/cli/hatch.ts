@@ -1,15 +1,26 @@
 // 2026-04-16 Eric: 宠物配对孵化功能
 // 用户 LV8+ 可用好友 DNA 码链进行同品种配对孵化，生成全新宠物
 
-import { loadState, saveState, createPet } from '../core/pet.js';
-import { parseDNA, generateDNA } from '../core/dna.js';
+import { loadState, saveState, createPet, expForLevel } from '../core/pet.js';  // 2026-04-16 Eric: +expForLevel 用于扣级后重算
+import { parseDNA } from '../core/dna.js';  // 2026-04-16 Eric: 移除 generateDNA，改用 crypto.randomBytes
 import { getRarityDisplay, RARITY_INFO } from '../core/rarity.js';
 import { SPECIES_NAMES } from '../render/sprites.js';
 import { fg, RESET, BOLD } from '../render/pixel.js';
 import type { Rarity } from '../core/types.js';
 import { createInterface } from 'node:readline';
+import { randomBytes } from 'node:crypto';  // 2026-04-16 Eric: 真随机 DNA 生成
 
 const HATCH_MIN_LEVEL = 8;
+const HATCH_LEVEL_COST = 3;  // 2026-04-16 Eric: 孵化扣除等级数
+
+// 2026-04-16 Eric: 稀有度 → DNA 末字节映射，确保 parseDNA 结果与 hatchedRarity 一致
+const RARITY_BYTE: Record<Rarity, number> = {
+  shiny:     0x01,
+  legendary: 0x08,
+  rare:      0x18,
+  uncommon:  0x40,
+  common:    0x80,
+};
 
 /** 孵化稀有度权重表: 普通60% 优秀25% 稀有10% 传说4% 异色1% */
 const HATCH_RARITY_TABLE: { rarity: Rarity; weight: number }[] = [
@@ -19,6 +30,13 @@ const HATCH_RARITY_TABLE: { rarity: Rarity; weight: number }[] = [
   { rarity: 'legendary', weight: 4 },
   { rarity: 'shiny',     weight: 1 },
 ];
+
+// 2026-04-16 Eric: 用 crypto.randomBytes 生成真随机 DNA，末字节编码指定稀有度
+function generateHatchDNA(rarity: Rarity): string {
+  const bytes = randomBytes(8);
+  bytes[7] = RARITY_BYTE[rarity];  // 末字节对齐 determineRarity 区间
+  return Array.from(bytes).map(b => b.toString(16).toUpperCase().padStart(2, '0')).join('-');
+}
 
 /** 加权随机抽取孵化稀有度 */
 function rollHatchRarity(): Rarity {
@@ -95,6 +113,12 @@ export async function doHatch(friendCode?: string): Promise<void> {
     return;
   }
 
+  // 2026-04-16 Eric: 阻止自我配对
+  if (friendCode === state.dna) {
+    console.log('  \u274C 不能和自己的宠物配对，请使用好友的 DNA 码链');
+    return;
+  }
+
   // 品种匹配
   const mySpecies = state.species;
   const friendSpecies = friendDNA.species;
@@ -114,13 +138,14 @@ export async function doHatch(friendCode?: string): Promise<void> {
   console.log(`  \u{1F95A} 配对成功！${myName.zh} \u00D7 ${myName.zh} 开始孵化...`);
   await showHatchProgress();
 
-  // 随机稀有度 + 生成新 DNA
+  // 2026-04-16 Eric: 随机稀有度 + 真随机 DNA（末字节编码稀有度，保证一致性）
   const hatchedRarity = rollHatchRarity();
-  const newDNA = generateDNA();
+  const newDNAString = generateHatchDNA(hatchedRarity);
+  const newDNA = parseDNA(newDNAString);
   const rarityInfo = RARITY_INFO[hatchedRarity];
   const rc = fg(rarityInfo.color);
   const childName = `${state.name}之子`;
-  const newPet = createPet(childName, mySpecies, newDNA.raw, hatchedRarity);
+  const newPet = createPet(childName, mySpecies, newDNAString, hatchedRarity);
 
   // 展示新宠物
   console.log(`  \u2728 孵化完成！`);
@@ -133,6 +158,15 @@ export async function doHatch(friendCode?: string): Promise<void> {
   console.log(`  \u255A${'═'.repeat(38)}\u255D`);
   console.log('');
 
+  // 2026-04-16 Eric: 孵化扣级（无论是否替换，配对成功即扣级）
+  const oldLevel = state.level;
+  state.level = Math.max(HATCH_MIN_LEVEL, state.level - HATCH_LEVEL_COST);
+  state.exp = 0;
+  state.expToNext = expForLevel(state.level + 1);
+  saveState(state);
+  console.log(`  \u26A0\uFE0F  孵化消耗：LV${oldLevel} → LV${state.level}（-${oldLevel - state.level} 级）`);
+  console.log('');
+
   // 询问是否替换
   const answer = await prompt(`  是否替换当前宠物？新宠物将从 LV1 开始 (y/n): `);
   if (answer.toLowerCase() === 'y') {
@@ -140,6 +174,6 @@ export async function doHatch(friendCode?: string): Promise<void> {
     console.log(`  \u2705 已替换！${childName} 从 LV1 开始新旅程`);
     console.log(`  用 ${BOLD}claude-minipet rename <名字>${RESET} 给新宠物起个名字吧!`);
   } else {
-    console.log(`  \u{1F44C} 已取消替换，继续陪伴 ${state.name}`);
+    console.log(`  \u{1F44C} 已保留 ${state.name}（LV${state.level}），继续陪伴`);
   }
 }
