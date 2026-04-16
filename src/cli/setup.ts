@@ -21,7 +21,7 @@ if (process.env.CI || process.env.DOCKER) process.exit(0);
 // Check if any daemon was running, kill all, then restart
 let wasRunning = false;
 try {
-  const out = execSync("ps ax -o pid,command | grep 'minipet daemon start' | grep -v grep", {
+  const out = execSync("ps ax -o pid,command | grep '[d]aemon start' | grep minipet", {
     encoding: 'utf-8', timeout: 5000,
   }).trim();
   wasRunning = out.length > 0;
@@ -29,13 +29,21 @@ try {
 
 if (wasRunning) {
   // Kill all minipet daemon processes
-  try { execSync("pkill -f 'minipet daemon start'", { timeout: 5000 }); } catch { /* ignore */ }
+  // Kill using PIDs from ps (more reliable than pkill pattern matching)
+  try {
+    const pids = execSync("ps ax -o pid,command | grep '[d]aemon start' | grep minipet", {
+      encoding: 'utf-8', timeout: 5000,
+    }).trim().split('\n').map(l => parseInt(l.trim())).filter(Boolean);
+    for (const pid of pids) {
+      try { process.kill(pid, 'SIGTERM'); } catch { /* ignore */ }
+    }
+  } catch { /* no matches */ }
   // Wait up to 5s for all to die
   for (let i = 0; i < 50; i++) {
     try {
-      execSync("pgrep -f 'minipet daemon start'", { timeout: 3000 });
+      execSync("ps ax -o pid,command | grep '[d]aemon start' | grep minipet", { timeout: 3000 });
       execSync('sleep 0.1', { stdio: 'ignore' });
-    } catch { break; } // pgrep exits 1 = no match = all dead
+    } catch { break; } // no matches = all dead
   }
   // Clean PID file
   const PID_FILE = join(homedir(), '.claude-minipet', 'daemon.pid');

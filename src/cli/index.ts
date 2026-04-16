@@ -218,7 +218,7 @@ async function finishSetup() {
   if (!isDaemonRunning()) {
     try {
       const { spawn } = await import('node:child_process');
-      const child = spawn(process.execPath, [process.argv[1], 'daemon', 'start'], {
+      const child = spawn('claude-minipet', ['daemon', 'start'], {
         detached: true,
         stdio: 'ignore',
       });

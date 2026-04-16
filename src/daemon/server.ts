@@ -178,7 +178,7 @@ function killAllDaemons(): void {
   const findAndKill = () => {
     try {
       // Find all minipet daemon processes except ourselves
-      const out = execSync("ps ax -o pid,command | grep 'minipet daemon start' | grep -v grep", {
+      const out = execSync("ps ax -o pid,command | grep '[d]aemon start' | grep minipet", {
         encoding: 'utf-8',
         timeout: 5000,
       }).trim();
@@ -198,7 +198,7 @@ function killAllDaemons(): void {
   // Wait up to 5 seconds for all to die
   for (let i = 0; i < 50; i++) {
     try {
-      const out = execSync("ps ax -o pid,command | grep 'minipet daemon start' | grep -v grep", {
+      const out = execSync("ps ax -o pid,command | grep '[d]aemon start' | grep minipet", {
         encoding: 'utf-8',
         timeout: 5000,
       }).trim();
