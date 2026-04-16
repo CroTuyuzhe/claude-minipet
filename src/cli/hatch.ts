@@ -1,17 +1,17 @@
 // 2026-04-16 Eric: 宠物配对孵化功能
 // 用户 LV8+ 可用好友 DNA 码链进行同品种配对孵化，生成全新宠物
 
-import { loadState, saveState, createPet, expForLevel } from '../core/pet.js';  // 2026-04-16 Eric: +expForLevel 用于扣级后重算
-import { parseDNA } from '../core/dna.js';  // 2026-04-16 Eric: 移除 generateDNA，改用 crypto.randomBytes
+import { loadState, saveState, createPet } from '../core/pet.js';
+import { parseDNA } from '../core/dna.js';
 import { getRarityDisplay, RARITY_INFO } from '../core/rarity.js';
 import { SPECIES_NAMES } from '../render/sprites.js';
 import { fg, RESET, BOLD } from '../render/pixel.js';
+import { loadAuth } from '../core/sync.js';  // 2026-04-16 Eric: 服务端冷却校验需要认证信息
 import type { Rarity } from '../core/types.js';
 import { createInterface } from 'node:readline';
-import { randomBytes } from 'node:crypto';  // 2026-04-16 Eric: 真随机 DNA 生成
+import { randomBytes } from 'node:crypto';
 
 const HATCH_MIN_LEVEL = 8;
-const HATCH_LEVEL_COST = 3;  // 2026-04-16 Eric: 孵化扣除等级数
 
 // 2026-04-16 Eric: 稀有度 → DNA 末字节映射，确保 parseDNA 结果与 hatchedRarity 一致
 const RARITY_BYTE: Record<Rarity, number> = {
@@ -21,6 +21,41 @@ const RARITY_BYTE: Record<Rarity, number> = {
   uncommon:  0x40,
   common:    0x80,
 };
+
+// 2026-04-16 Eric: 服务端孵化冷却校验（72h），防止无限刷宠
+interface HatchCooldownResult {
+  ok: boolean;
+  cooldown?: boolean;
+  remainingSeconds?: number;
+  error?: string;
+}
+
+async function checkHatchCooldown(friendDna: string): Promise<HatchCooldownResult> {
+  const auth = loadAuth();
+  if (!auth) return { ok: false, error: '未登录' };
+
+  try {
+    const res = await fetch(`${auth.serverUrl}/pets/hatch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${auth.token}`,
+      },
+      body: JSON.stringify({ friendDna }),
+      signal: AbortSignal.timeout(5000),
+    });
+    return await res.json();
+  } catch {
+    return { ok: false, error: '无法连接服务器，请检查网络后重试' };
+  }
+}
+
+function formatCooldown(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}小时${m}分钟`;
+  return `${m}分钟`;
+}
 
 /** 孵化稀有度权重表: 普通60% 优秀25% 稀有10% 传说4% 异色1% */
 const HATCH_RARITY_TABLE: { rarity: Rarity; weight: number }[] = [
@@ -133,8 +168,20 @@ export async function doHatch(friendCode?: string): Promise<void> {
     return;
   }
 
-  // 配对成功 → 孵化
+  // 2026-04-16 Eric: 服务端冷却校验（72h）
   console.log('');
+  console.log('  \u23F3 正在校验孵化冷却...');
+  const cooldownResult = await checkHatchCooldown(friendCode);
+  if (!cooldownResult.ok) {
+    if (cooldownResult.cooldown && cooldownResult.remainingSeconds) {
+      console.log(`  \u274C 孵化冷却中，剩余 ${formatCooldown(cooldownResult.remainingSeconds)}`);
+    } else {
+      console.log(`  \u274C ${cooldownResult.error ?? '孵化请求失败'}`);
+    }
+    return;
+  }
+
+  // 配对成功 → 孵化
   console.log(`  \u{1F95A} 配对成功！${myName.zh} \u00D7 ${myName.zh} 开始孵化...`);
   await showHatchProgress();
 
@@ -158,15 +205,6 @@ export async function doHatch(friendCode?: string): Promise<void> {
   console.log(`  \u255A${'═'.repeat(38)}\u255D`);
   console.log('');
 
-  // 2026-04-16 Eric: 孵化扣级（无论是否替换，配对成功即扣级）
-  const oldLevel = state.level;
-  state.level = Math.max(HATCH_MIN_LEVEL, state.level - HATCH_LEVEL_COST);
-  state.exp = 0;
-  state.expToNext = expForLevel(state.level + 1);
-  saveState(state);
-  console.log(`  \u26A0\uFE0F  孵化消耗：LV${oldLevel} → LV${state.level}（-${oldLevel - state.level} 级）`);
-  console.log('');
-
   // 询问是否替换
   const answer = await prompt(`  是否替换当前宠物？新宠物将从 LV1 开始 (y/n): `);
   if (answer.toLowerCase() === 'y') {
@@ -174,6 +212,6 @@ export async function doHatch(friendCode?: string): Promise<void> {
     console.log(`  \u2705 已替换！${childName} 从 LV1 开始新旅程`);
     console.log(`  用 ${BOLD}claude-minipet rename <名字>${RESET} 给新宠物起个名字吧!`);
   } else {
-    console.log(`  \u{1F44C} 已保留 ${state.name}（LV${state.level}），继续陪伴`);
+    console.log(`  \u{1F44C} 已取消替换，继续陪伴 ${state.name}`);
   }
 }
