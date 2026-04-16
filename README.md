@@ -83,6 +83,7 @@ claude-minipet feed              # 喂食（饱食度 +30）
 claude-minipet pat               # 摸摸（心情 +10，亲密 +2）
 claude-minipet rename <名字>     # 给宠物改名
 claude-minipet redeem <兑换码>   # 兑换码兑换宠物
+claude-minipet hatch <DNA码链>   # 配对孵化新宠物（需 LV8）
 claude-minipet sync              # 手动同步云端数据
 ```
 
@@ -95,6 +96,19 @@ claude-minipet redeem XXXX-XXXX-XXXX
 ```
 
 兑换后当前宠物会被替换为新宠物（Lv.1 重新培养）。兑换码由管理员生成分发。
+
+## 配对孵化
+
+宠物达到 **LV8** 后解锁，使用好友的 DNA 码链进行同品种配对，孵化全新宠物：
+
+```bash
+claude-minipet hatch F8-4B-FC-04-C0-23-4E-4F
+```
+
+- 仅支持**同品种**配对，不同品种会提示孵化失败
+- 码链无使用次数限制，可无限次配对
+- 每次孵化生成全新 DNA，稀有度独立随机：普通(60%) / 优秀(25%) / 稀有(10%) / 传说(4%) / 异色(1%)
+- 孵化完成后可选择是否替换当前宠物（替换后从 LV1 开始）
 
 ## 特性
 
