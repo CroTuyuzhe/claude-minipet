@@ -88,6 +88,8 @@ export interface PetConfig {
   language: 'zh' | 'en';
   animationsEnabled: boolean;
   statusLineRows: number;
+  desktopPetUrl?: string;    // desktop-pet 后端地址，如 'http://localhost:8765'
+  desktopPetId?: string;     // desktop-pet 中的宠物 ID
 }
 
 /** Hook event types from Claude Code */
