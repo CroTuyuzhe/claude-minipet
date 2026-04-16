@@ -10,7 +10,7 @@ import { randomBytes } from 'node:crypto';
 
 const HATCH_MIN_LEVEL = 8;
 
-//稀有度 → DNA 末字节映射，确保 parseDNA 结果与 hatchedRarity 一致
+// 稀有度 → DNA 末字节映射，确保 parseDNA 结果与 hatchedRarity 一致
 const RARITY_BYTE: Record<Rarity, number> = {
   shiny:     0x01,
   legendary: 0x08,
@@ -19,7 +19,7 @@ const RARITY_BYTE: Record<Rarity, number> = {
   common:    0x80,
 };
 
-//服务端孵化冷却校验（72h），防止无限刷宠
+// 服务端孵化冷却校验（72h），防止无限刷宠
 interface HatchCooldownResult {
   ok: boolean;
   cooldown?: boolean;
@@ -62,7 +62,7 @@ const HATCH_RARITY_TABLE: { rarity: Rarity; weight: number }[] = [
   { rarity: 'shiny',     weight: 1 },
 ];
 
-//用 crypto.randomBytes 生成真随机 DNA，末字节编码指定稀有度
+// 用 crypto.randomBytes 生成真随机 DNA，末字节编码指定稀有度
 function generateHatchDNA(rarity: Rarity): string {
   const bytes = randomBytes(8);
   bytes[7] = RARITY_BYTE[rarity];  // 末字节对齐 determineRarity 区间
@@ -156,7 +156,7 @@ export async function doHatch(friendCode?: string): Promise<void> {
     return;
   }
 
-  //阻止自我配对
+  // 阻止自我配对
   if (friendCode === state.dna) {
     console.log('  \u274C 不能和自己的宠物配对，请使用好友的 DNA 码链');
     return;
@@ -176,7 +176,7 @@ export async function doHatch(friendCode?: string): Promise<void> {
     return;
   }
 
-  //服务端冷却校验（72h）
+  // 服务端冷却校验（72h）
   console.log('');
   console.log('  \u23F3 正在校验孵化冷却...');
   const cooldownResult = await checkHatchCooldown();
@@ -193,12 +193,11 @@ export async function doHatch(friendCode?: string): Promise<void> {
   console.log(`  \u{1F95A} 配对成功！${myName.zh} \u00D7 ${myName.zh} 开始孵化...`);
   await showHatchProgress();
 
-  //随机稀有度 + 真随机 DNA（末字节编码稀有度，保证一致性）
+  // 随机稀有度 + 真随机 DNA（末字节编码稀有度，保证一致性）
   const hatchedRarity = rollHatchRarity();
   const newDNAString = generateHatchDNA(hatchedRarity);
   const newDNA = parseDNA(newDNAString);
-  const rarityInfo = RARITY_INFO[hatchedRarity];
-  const rc = fg(rarityInfo.color);
+  const rc = fg(RARITY_INFO[hatchedRarity].color);
   const baseName = state.name.replace(/(之子)+$/, '');
   const childName = `${baseName}之子`;
   const newPet = createPet(childName, mySpecies, newDNAString, hatchedRarity);
